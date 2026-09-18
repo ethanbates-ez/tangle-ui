@@ -43,6 +43,7 @@ function createRoutingBridge(resolve: () => ToolBridgeApi): ToolBridgeApi {
     createSubgraph: (taskEntityIds, subgraphName) =>
       resolve().createSubgraph(taskEntityIds, subgraphName),
     unpackSubgraph: (taskEntityId) => resolve().unpackSubgraph(taskEntityId),
+    autoLayout: () => resolve().autoLayout(),
     validatePipeline: () => resolve().validatePipeline(),
     searchComponents: (args) => resolve().searchComponents(args),
     submitPipelineRun: () => resolve().submitPipelineRun(),
@@ -55,7 +56,6 @@ function createRoutingBridge(resolve: () => ToolBridgeApi): ToolBridgeApi {
       resolve().getContainerState(executionId),
     getContainerLog: (executionId) => resolve().getContainerLog(executionId),
     debugPipelineRun: (runId) => resolve().debugPipelineRun(runId),
-    autoLayout: () => resolve().autoLayout(),
   };
 }
 
