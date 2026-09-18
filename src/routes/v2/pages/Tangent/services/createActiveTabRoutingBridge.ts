@@ -55,6 +55,7 @@ function createRoutingBridge(resolve: () => ToolBridgeApi): ToolBridgeApi {
       resolve().getContainerState(executionId),
     getContainerLog: (executionId) => resolve().getContainerLog(executionId),
     debugPipelineRun: (runId) => resolve().debugPipelineRun(runId),
+    autoLayout: () => resolve().autoLayout(),
   };
 }
 
