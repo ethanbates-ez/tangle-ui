@@ -51,6 +51,9 @@ import {
   createSubgraph,
   renamePipeline,
   updatePipelineDescription,
+  updatePipelineNotes,
+  updatePipelineTags,
+  updateRunNameTemplate,
 } from "@/routes/v2/pages/Editor/store/actions/pipeline.actions";
 import {
   addTask,
@@ -103,6 +106,9 @@ type CsomHandlers = Pick<
   | "getPipelineState"
   | "setPipelineName"
   | "setPipelineDescription"
+  | "setPipelineNotes"
+  | "setPipelineTags"
+  | "setRunNameTemplate"
   | "addTask"
   | "deleteTask"
   | "renameTask"
@@ -186,6 +192,25 @@ export function createCsomBridgeHandlers(deps: CsomBridgeDeps): CsomHandlers {
     async setPipelineDescription(description) {
       const spec = requireSpec(deps);
       updatePipelineDescription(deps.undo, spec, description);
+      return { success: true };
+    },
+
+    async setPipelineNotes(notes) {
+      updatePipelineNotes(deps.undo, requireSpec(deps), notes || undefined);
+      return { success: true };
+    },
+
+    async setPipelineTags(tags) {
+      updatePipelineTags(deps.undo, requireSpec(deps), tags);
+      return { success: true };
+    },
+
+    async setRunNameTemplate(template) {
+      updateRunNameTemplate(
+        deps.undo,
+        requireSpec(deps),
+        template || undefined,
+      );
       return { success: true };
     },
 
