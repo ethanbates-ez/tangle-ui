@@ -86,7 +86,7 @@ function dropNulls<T>(value: T): T {
   ) as T;
 }
 
-const COLOR_GUIDANCE = `Hex value or "transparent". The swatches the UI offers are ${PRESET_COLORS.join(", ")} — prefer one of those so the note matches the user's own.`;
+const COLOR_GUIDANCE = `Hex value or "transparent". The swatches the UI offers are ${PRESET_COLORS.join(", ")} — prefer one of those, so what you colour matches what the user coloured by hand.`;
 
 const positionSchema = z.object({ x: z.number(), y: z.number() });
 const sizeSchema = z.object({ width: z.number(), height: z.number() });
@@ -259,6 +259,18 @@ export function createCsomTools(bridge: ToolBridgeApi) {
     }),
     execute: async ({ entityId, newName }) =>
       asJson(await bridge.renameTask(entityId, newName)),
+  });
+
+  const setTaskColor = tool({
+    name: "set_task_color",
+    description:
+      "Colour one or more tasks. Colour is how users group tasks visually — it has no effect on what runs — so read each task's `color` in `get_pipeline_state` before changing anything and do not recolour a task the user coloured themselves unless they asked. Give every task in a group the same colour, and use `transparent` to clear it. Tasks may be in different subgraphs.",
+    parameters: z.object({
+      taskEntityIds: z.array(z.string()).describe("$ids of the tasks"),
+      color: z.string().describe(COLOR_GUIDANCE),
+    }),
+    execute: async ({ taskEntityIds, color }) =>
+      asJson(await bridge.setTaskColor(taskEntityIds, color)),
   });
 
   const addInput = tool({
@@ -680,6 +692,7 @@ export function createCsomTools(bridge: ToolBridgeApi) {
       addTask,
       deleteTask,
       renameTask,
+      setTaskColor,
       addInput,
       deleteInput,
       renameInput,

@@ -17,6 +17,7 @@ import type {
 } from "@/agent/toolBridgeApi";
 import type { FlexNodeData } from "@/components/shared/ReactFlow/FlowCanvas/FlexNode/types";
 import type { LayoutAlgorithm } from "@/components/shared/ReactFlow/FlowCanvas/utils/autolayout";
+import type { Task } from "@/models/componentSpec";
 import {
   describeBindingEndpointProblem,
   findBindingEndpointProblems,
@@ -57,6 +58,7 @@ import {
 } from "@/routes/v2/pages/Editor/store/actions/pipeline.actions";
 import {
   addTask,
+  batchSetTaskColor,
   deleteTask,
   moveNodeToPosition,
   renameTask,
@@ -114,6 +116,7 @@ type CsomHandlers = Pick<
   | "addTask"
   | "deleteTask"
   | "renameTask"
+  | "setTaskColor"
   | "addInput"
   | "deleteInput"
   | "renameInput"
@@ -286,6 +289,41 @@ export function createCsomBridgeHandlers(deps: CsomBridgeDeps): CsomHandlers {
             location,
           ),
       );
+    },
+
+    async setTaskColor(taskEntityIds, color) {
+      const root = requireSpec(deps);
+
+      const colorProblem = explainUnpickableColor(color, "a task");
+      if (colorProblem) {
+        return {
+          success: false,
+          error: `Nothing was changed. ${colorProblem}`,
+        };
+      }
+
+      const distinctIds = [...new Set(taskEntityIds)];
+      if (distinctIds.length === 0) {
+        return {
+          success: false,
+          error:
+            "Nothing was changed — pass the $id of at least one task to recolour.",
+        };
+      }
+
+      const tasks: Task[] = [];
+      for (const taskEntityId of distinctIds) {
+        const target = resolveTarget(root, taskEntityId, "task");
+        if (!target.ok) {
+          return { success: false, error: target.error };
+        }
+        tasks.push(target.location.entity);
+      }
+
+      // Unlike create_subgraph, tasks from different subgraphs are allowed:
+      // the colour is a per-task annotation that never references its graph.
+      batchSetTaskColor(deps.undo, tasks, color);
+      return { success: true };
     },
 
     async addInput({
