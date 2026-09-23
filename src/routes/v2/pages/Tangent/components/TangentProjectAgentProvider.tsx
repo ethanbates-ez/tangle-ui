@@ -198,7 +198,7 @@ export function TangentProjectAgentProvider({
     createActiveTabRoutingBridge(() => store.getActiveTabBridge()),
   );
   const [agentTargets] = useState(() =>
-    createAgentTargetRouter(() => getActiveTabBridgeRef.current()),
+    createAgentTargetRouter(() => store.getActiveTabBridge()),
   );
 
   useEffect(() => {
