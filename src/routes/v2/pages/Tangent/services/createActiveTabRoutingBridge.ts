@@ -17,13 +17,7 @@ function noActivePipeline(): never {
   );
 }
 
-export function createActiveTabRoutingBridge(
-  getBridge: () => ToolBridgeApi | undefined,
-): ToolBridgeApi {
-  function resolve(): ToolBridgeApi {
-    return getBridge() ?? noActivePipeline();
-  }
-
+function createRoutingBridge(resolve: () => ToolBridgeApi): ToolBridgeApi {
   return {
     getPipelineState: () => resolve().getPipelineState(),
     getSubgraphState: (taskEntityId) =>
@@ -61,5 +55,49 @@ export function createActiveTabRoutingBridge(
       resolve().getContainerState(executionId),
     getContainerLog: (executionId) => resolve().getContainerLog(executionId),
     debugPipelineRun: (runId) => resolve().debugPipelineRun(runId),
+  };
+}
+
+export function createActiveTabRoutingBridge(
+  getBridge: () => ToolBridgeApi | undefined,
+): ToolBridgeApi {
+  return createRoutingBridge(() => getBridge() ?? noActivePipeline());
+}
+
+export interface AgentTargetRouter {
+  bridgeFor(agentId: string): ToolBridgeApi;
+  pinTurn(agentId: string): void;
+  forget(agentId: string): void;
+}
+
+/**
+ * Per-agent bridges whose target is frozen for the duration of a turn.
+ *
+ * Re-targeting between turns is the point of the router — the agent acts on
+ * the pipeline the person is looking at. Re-targeting *during* one is a bug:
+ * an agent can read tab A, the person switches to B while it reasons, and its
+ * next mutation lands in B. Pinning at the turn boundary keeps a turn on the
+ * tab it started against.
+ *
+ * The pin is per agent because one worker hosts several and their turns are
+ * only serialized per `agentId`, so two can be in flight at once.
+ */
+export function createAgentTargetRouter(
+  getBridge: () => ToolBridgeApi | undefined,
+): AgentTargetRouter {
+  const pinned = new Map<string, ToolBridgeApi | undefined>();
+
+  return {
+    bridgeFor(agentId) {
+      return createRoutingBridge(
+        () => pinned.get(agentId) ?? getBridge() ?? noActivePipeline(),
+      );
+    },
+    pinTurn(agentId) {
+      pinned.set(agentId, getBridge());
+    },
+    forget(agentId) {
+      pinned.delete(agentId);
+    },
   };
 }
