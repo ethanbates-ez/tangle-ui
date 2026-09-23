@@ -55,7 +55,9 @@ export function useDebugInTangent() {
           payload: {},
         });
       } catch (error) {
-        await deleteProject(project.id).catch(() => undefined);
+        await deleteProject(project.id).catch((rollbackError) =>
+          console.error("Failed to roll back debug project", rollbackError),
+        );
         throw error;
       }
 
