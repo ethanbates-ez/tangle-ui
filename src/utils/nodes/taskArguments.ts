@@ -71,7 +71,7 @@ export function extractCloneableTaskArguments(
 ): Record<string, string> {
   const stringArguments = extractTaskArguments(taskArguments, componentSpec);
   for (const [name, argument] of Object.entries(taskArguments ?? {})) {
-    if (isSecretArgument(argument as ArgumentType)) {
+    if (isSecretArgument(argument)) {
       delete stringArguments[name];
     }
   }
